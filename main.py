@@ -88,14 +88,10 @@ def grade_choice(update: Update, context: CallbackContext):
 
     user_choices[user_id] = grade
     user_info.append(grade)
-    context.bot.send_message(
-        chat_id=user_id,
-        text = "in grade choice"
-    )
 
     context.bot.send_message(
         chat_id=user_id,
-        text="What would you like to do2?",
+        text="What would you like to do?",
         reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA", "Summarize youtube video"]], one_time_keyboard=True)
     )
 
