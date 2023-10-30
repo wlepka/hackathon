@@ -14,9 +14,9 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 #!IMPORTANT!
 #USED FOR DOCS UPLOAD
-# headers = {'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34','Content-Type': 'application/json'
+# headers = {'x-api-key': CHATPDF_API_KEY,'Content-Type': 'application/json'
 #     }
-# data = {'url':'https://hackathon.fra1.cdn.digitaloceanspaces.com/Free_Test_Data_500KB_PDF.pdf'}
+# data = {'url':'https://hackathon.fra1.cdn.digitaloceanspaces.com/compsci.pdf'}
 # response = requests.post('https://api.chatpdf.com/v1/sources/add-url', headers=headers, json=data)
 # if response.status_code == 200:
 #     print('Source ID:', response.json()['sourceId'])
@@ -131,12 +131,12 @@ def handle_user_question(update: Update, context: CallbackContext):
     
     if user_info[2] == "Ask a Question":
         headers = {
-            'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34',
+            'x-api-key': CHATPDF_API_KEY,
             "Content-Type": "application/json",
         }
 
         data = {
-            'sourceId': "src_0PcK9YcnCwnoxaC4HMnQC",
+            'sourceId': "src_zPnOPw7uqOgGY9T3o9cwg",
             'messages': [
                 {
                     'role': "user",
@@ -161,12 +161,12 @@ def handle_user_question(update: Update, context: CallbackContext):
         )
     elif user_info[2] == "Mock SA":
         headers = {
-            'x-api-key': 'sec_xFw2gAxPSuZIXPkXKaRCs2Y3gUqJcjYL',
+            'x-api-key': CHATPDF_API_KEY,
             "Content-Type": "application/json",
         }
 
         data = {
-            'sourceId': "src_h9eTpJdSLgQUKjlD7wBnU",
+            'sourceId': "src_zPnOPw7uqOgGY9T3o9cwg",
             'messages': [
                 {
                     'role': "user",
