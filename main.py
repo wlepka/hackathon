@@ -10,7 +10,23 @@ from dotenv import load_dotenv
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHATPDF_API_KEY = os.getenv('CHATPDF_API_KEY')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
+def summarize_video(video_url):
+    # Use OpenAI to generate a summary
+    response = openai.Completion.create(
+        engine="davinci",  # Or another suitable engine
+        prompt=f'Summarize deeply the main points of the video: {video_url}.',
+        max_tokens=150,    # Adjust as needed
+        n=1,               # Number of completions    # Define a stop condition
+    )
+
+    summary = response.choices[0].text.strip()
+    return summary
+
+# video_url = "https://youtu.be/Q9zv369Ggfk?si=LGG8qHk_sOG1smI3"
+# summary = summarize_video(video_url)
+# print(summary)
 
 #!IMPORTANT!
 #USED FOR DOCS UPLOAD
@@ -62,14 +78,14 @@ def button(update: Update, context: CallbackContext):
     else:
         context.bot.send_message(
             chat_id=user_id,
-            text="What would you like to do1?",
-            reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA"]], one_time_keyboard=True)
+            text="Please choose your grade:",
+            reply_markup=ReplyKeyboardMarkup([["11"], ["12"]], one_time_keyboard=True)
         )
 
 def grade_choice(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     grade = update.message.text
-    
+
     user_choices[user_id] = grade
     user_info.append(grade)
     context.bot.send_message(
@@ -80,7 +96,7 @@ def grade_choice(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=user_id,
         text="What would you like to do2?",
-        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA", "Summarize youtube video"]], one_time_keyboard=True)
     )
 
 def option_choice(update: Update, context: CallbackContext):
@@ -119,10 +135,15 @@ def option_choice(update: Update, context: CallbackContext):
             chat_id=user_id,
             text="What is your unit?"
         )
+    elif option == "Summarize youtube video":
+        context.bot.send_message(
+            chat_id=user_id,
+            text="Send me a youtube link"
+        )
     else:
         context.bot.send_message(
             chat_id=user_id,
-            text="Invalid option. Please choose 'Ask a Question' or 'Send Me a Book' or 'Mock SA'."
+            text="Invalid option. Please choose 'Ask a Question' or 'Send Me a Book' or 'Mock SA' or 'Summarize youtube video'."
         )
 
 def handle_user_question(update: Update, context: CallbackContext):
@@ -189,8 +210,15 @@ def handle_user_question(update: Update, context: CallbackContext):
             chat_id=user_id,
             text=res
         )
+    elif user_info[2] == "Summarize youtube video":
+        video_url = question
+        summary = summarize_video(video_url)
+        context.bot.send_message(
+        chat_id=user_id,
+        text = summary
+        )
 
-button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math|igcse)$'), button)
+button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math|igcse|sat|ielts)$'), button)
 grade_handler = MessageHandler(Filters.regex(r'^(7|8|9|10|11|12)$'), grade_choice)
 
 if __name__ == '__main__':
@@ -198,7 +226,7 @@ if __name__ == '__main__':
     dp = updater.dispatcher
 
     start_handler = CommandHandler('start', start)
-    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Send Me a Book|Mock SA)$'), option_choice)
+    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Send Me a Book|Mock SA|Summarize youtube video)$'), option_choice)
     question_handler = MessageHandler(Filters.text & ~Filters.command, handle_user_question)
 
     dp.add_handler(start_handler)
