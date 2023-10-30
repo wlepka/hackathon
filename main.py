@@ -5,13 +5,15 @@ import requests
 import urllib.request
 import os
 
+import os
+import openai
 
+#!IMPORTANT!
+#USED FOR DOCS UPLOAD
 # headers = {'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34','Content-Type': 'application/json'
 #     }
 # data = {'url':'https://www.africau.edu/images/default/sample.pdf'}
-
 # response = requests.post('https://api.chatpdf.com/v1/sources/add-url', headers=headers, json=data)
-
 # if response.status_code == 200:
 #     print('Source ID:', response.json()['sourceId'])
 # else:
@@ -19,8 +21,7 @@ import os
 #     print('Error:', response.text)
 
 TELEGRAM_TOKEN = '6425414932:AAE3p4gNl_eJqPc3D9FWWxtVmP1sDE6NiSo'
-# chatpdf = chatpdf.ChatPDF('sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34')
-# chatpdf.load_pdf('https://drive.google.com/file/d/1-O8d_RjRsRTQg4v-Jqb39SQy9cZXfIU3/view?usp=sharing')
+openai.api_key = os.getenv("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")
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
