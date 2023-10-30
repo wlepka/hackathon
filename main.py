@@ -2,6 +2,9 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters
 import requests
+import urllib.request
+import os
+
 
 # headers = {'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34','Content-Type': 'application/json'
 #     }
@@ -25,13 +28,14 @@ logging.basicConfig(
 )
 
 user_choices = {}
+user_info = []
 
 def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id,
         text="Welcome to NISAI - your faithful companion on the path to successful learning! ... (your message here)",
-        reply_markup=ReplyKeyboardMarkup([["SAT", "IELTS"], ["IGCSE", "CompSci", "Physics", "Math"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["sat", "ielts"], ["igcse", "compsci", "physics", "math"]], one_time_keyboard=True)
     )
 
 def button(update: Update, context: CallbackContext):
@@ -39,8 +43,9 @@ def button(update: Update, context: CallbackContext):
     user_choice = update.message.text
 
     user_choices[user_id] = user_choice
+    user_info.append(user_choice)
 
-    if user_choice in ["CompSci", "Physics", "Math"]:
+    if user_choice in ["compsci", "physics", "math"]:
         context.bot.send_message(
             chat_id=user_id,
             text="Please choose your grade:",
@@ -58,6 +63,7 @@ def grade_choice(update: Update, context: CallbackContext):
     grade = update.message.text
     
     user_choices[user_id] = grade
+    user_info.append(grade)
     context.bot.send_message(
         chat_id=user_id,
         text = "in grade choice"
@@ -86,8 +92,25 @@ def option_choice(update: Update, context: CallbackContext):
         # Save the user's choice to ask a question for later processing
         user_choices[user_id] += " Ask a Question "
     elif option == "Book":
-        # Do something with the choice of "Book"
-        pass
+        print(user_info)
+        # Download and send the PDF file
+        pdf_url = 'https://hackathon.fra1.cdn.digitaloceanspaces.com/'
+        pdf_url += user_info[0]
+        pdf_url += '%20'   # Replace with the actual PDF URL
+        pdf_url += user_info[1]   # Replace with the actual PDF URL
+        pdf_url += '.pdf'   # Replace with the actual PDF URL
+        pdf_file = os.path.basename(pdf_url)
+        print(pdf_url)
+        # Download the PDF file
+        urllib.request.urlretrieve(pdf_url, pdf_file)
+
+        # Send the PDF file to the user
+        context.bot.send_document(
+            chat_id=user_id,
+            document=open(pdf_file, 'rb')
+        )
+
+        os.remove(pdf_file) 
     else:
         context.bot.send_message(
             chat_id=user_id,
@@ -132,7 +155,7 @@ def handle_user_question(update: Update, context: CallbackContext):
 # ...
 
 # Separate message handlers for button choice and grade choice
-button_handler = MessageHandler(Filters.regex(r'^(CompSci|Physics|Math)$'), button)
+button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math)$'), button)
 grade_handler = MessageHandler(Filters.regex(r'^(7|8|9|10|11|12)$'), grade_choice)
 
 # ...
