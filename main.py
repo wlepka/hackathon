@@ -4,24 +4,25 @@ from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandle
 import requests
 import urllib.request
 import os
-
-import os
 import openai
+from dotenv import load_dotenv
+
+load_dotenv()
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHATPDF_API_KEY = os.getenv('CHATPDF_API_KEY')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 #!IMPORTANT!
 #USED FOR DOCS UPLOAD
 # headers = {'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34','Content-Type': 'application/json'
 #     }
-# data = {'url':'https://www.africau.edu/images/default/sample.pdf'}
+# data = {'url':'https://hackathon.fra1.cdn.digitaloceanspaces.com/Free_Test_Data_500KB_PDF.pdf'}
 # response = requests.post('https://api.chatpdf.com/v1/sources/add-url', headers=headers, json=data)
 # if response.status_code == 200:
 #     print('Source ID:', response.json()['sourceId'])
 # else:
 #     print('Status:', response.status_code)
 #     print('Error:', response.text)
-
-TELEGRAM_TOKEN = '6425414932:AAE3p4gNl_eJqPc3D9FWWxtVmP1sDE6NiSo'
-openai.api_key = os.getenv("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")
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -52,11 +53,17 @@ def button(update: Update, context: CallbackContext):
             text="Please choose your grade:",
             reply_markup=ReplyKeyboardMarkup([["7", "8", "9"], ["10", "11", "12"]], one_time_keyboard=True)
         )
+    elif user_choice in ["igcse"]:
+        context.bot.send_message(
+            chat_id=user_id,
+            text="Please choose your grade:",
+            reply_markup=ReplyKeyboardMarkup([["10"], ["11"], ["12"]], one_time_keyboard=True)
+        )
     else:
         context.bot.send_message(
             chat_id=user_id,
             text="What would you like to do1?",
-            reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Book"]], one_time_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA"]], one_time_keyboard=True)
         )
 
 def grade_choice(update: Update, context: CallbackContext):
@@ -73,107 +80,132 @@ def grade_choice(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=user_id,
         text="What would you like to do2?",
-        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Book"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA"]], one_time_keyboard=True)
     )
 
 def option_choice(update: Update, context: CallbackContext):
-
     user_id = update.effective_user.id
     option = update.message.text
 
-    print(option)
-
-    first_choice = user_choices.get(user_id)
+    user_choices[user_id] = option
+    user_info.append(option)
+    print(user_info)
 
     if option == "Ask a Question":
         context.bot.send_message(
             chat_id=user_id,
             text="Please ask your question."
         )
-        # Save the user's choice to ask a question for later processing
-        user_choices[user_id] += " Ask a Question "
-    elif option == "Book":
+    elif option == "Send Me a Book":
         print(user_info)
-        # Download and send the PDF file
         pdf_url = 'https://hackathon.fra1.cdn.digitaloceanspaces.com/'
         pdf_url += user_info[0]
-        pdf_url += '%20'   # Replace with the actual PDF URL
-        pdf_url += user_info[1]   # Replace with the actual PDF URL
-        pdf_url += '.pdf'   # Replace with the actual PDF URL
+        pdf_url += '%20'
+        pdf_url += user_info[1]
+        pdf_url += '.pdf'
         pdf_file = os.path.basename(pdf_url)
         print(pdf_url)
-        # Download the PDF file
+
         urllib.request.urlretrieve(pdf_url, pdf_file)
 
-        # Send the PDF file to the user
         context.bot.send_document(
             chat_id=user_id,
             document=open(pdf_file, 'rb')
         )
 
         os.remove(pdf_file) 
+    elif option == "Mock SA":
+        context.bot.send_message(
+            chat_id=user_id,
+            text="What is your unit?"
+        )
     else:
         context.bot.send_message(
             chat_id=user_id,
-            text="Invalid option. Please choose 'Ask a Question' or 'Book'."
+            text="Invalid option. Please choose 'Ask a Question' or 'Send Me a Book' or 'Mock SA'."
         )
 
 def handle_user_question(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     question = update.message.text
+    
+    if user_info[2] == "Ask a Question":
+        headers = {
+            'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34',
+            "Content-Type": "application/json",
+        }
 
-    headers = {
-        'x-api-key': 'sec_BBiFx587OnD7EOedplwQIpfPrjqZLp34',
-        "Content-Type": "application/json",
-    }
+        data = {
+            'sourceId': "src_0PcK9YcnCwnoxaC4HMnQC",
+            'messages': [
+                {
+                    'role': "user",
+                    'content': question,
+                }
+            ]
+        }
 
-    data = {
-        'sourceId': "src_4BP4R4ShoALkecBsruvrA",
-        'messages': [
-            {
-                'role': "user",
-                'content': question,
-            }
-        ]
-    }
+        response = requests.post(
+            'https://api.chatpdf.com/v1/chats/message', headers=headers, json=data)
 
-    response = requests.post(
-        'https://api.chatpdf.com/v1/chats/message', headers=headers, json=data)
+        if response.status_code == 200:
+            print('Result:', response.json()['content'])
+            res = response.json()['content']
+        else:
+            print('Status:', response.status_code)
+            print('Error:', response.text)
 
-    if response.status_code == 200:
-        print('Result:', response.json()['content'])
-        res = response.json()['content']
-    else:
-        print('Status:', response.status_code)
-        print('Error:', response.text)
+        context.bot.send_message(
+            chat_id=user_id,
+            text=res
+        )
+    elif user_info[2] == "Mock SA":
+        headers = {
+            'x-api-key': 'sec_xFw2gAxPSuZIXPkXKaRCs2Y3gUqJcjYL',
+            "Content-Type": "application/json",
+        }
 
-    context.bot.send_message(
-        chat_id=user_id,
-        text=res
-    )
+        data = {
+            'sourceId': "src_h9eTpJdSLgQUKjlD7wBnU",
+            'messages': [
+                {
+                    'role': "user",
+                    'content': "Using the PDF book you have, create 10 question exam on this topic:" + question,
+                }
+            ]
+        }
 
+        response = requests.post(
+            'https://api.chatpdf.com/v1/chats/message', headers=headers, json=data)
 
-# ...
+        if response.status_code == 200:
+            print('Result:', response.json()['content'])
+            res = response.json()['content']
+        else:
+            print('Status:', response.status_code)
+            print('Error:', response.text)
 
-# Separate message handlers for button choice and grade choice
-button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math)$'), button)
+        context.bot.send_message(
+            chat_id=user_id,
+            text=res
+        )
+
+button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math|igcse)$'), button)
 grade_handler = MessageHandler(Filters.regex(r'^(7|8|9|10|11|12)$'), grade_choice)
-
-# ...
 
 if __name__ == '__main__':
     updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
     dp = updater.dispatcher
 
     start_handler = CommandHandler('start', start)
-    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Book)$'), option_choice)
+    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Send Me a Book|Mock SA)$'), option_choice)
     question_handler = MessageHandler(Filters.text & ~Filters.command, handle_user_question)
 
     dp.add_handler(start_handler)
-    dp.add_handler(button_handler)  # Handles subject choices (e.g., CompSci, Physics, Math)
-    dp.add_handler(grade_handler)   # Handles grade choices (e.g., 7, 8, 9, 10, 11, 12)
-    dp.add_handler(option_handler)  # Handles "Ask a Question" and "Book" options
-    dp.add_handler(question_handler) # Handles user questions
+    dp.add_handler(button_handler)
+    dp.add_handler(grade_handler)
+    dp.add_handler(option_handler)
+    dp.add_handler(question_handler)
 
     updater.start_polling()
     updater.idle()
