@@ -13,23 +13,21 @@ CHATPDF_API_KEY = os.getenv('CHATPDF_API_KEY')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 def summarize_video(video_url):
-    # Use OpenAI to generate a summary
     response = openai.Completion.create(
-        engine="davinci",  # Or another suitable engine
+        engine="davinci",
         prompt=f'Summarize deeply the main points of the video: {video_url}.',
-        max_tokens=150,    # Adjust as needed
-        n=1,               # Number of completions    # Define a stop condition
+        max_tokens=150,
+        n=1,
     )
 
     summary = response.choices[0].text.strip()
     return summary
 
 def check_for_ai_written_text(user_input):
-    # Call OpenAI to classify the text
     response = openai.Completion.create(
         engine="text-davinci-002",
         prompt="check if this text is ai-generated: " + user_input + ". Return 'True' if it is AI generated, return 'False' if it is not AI generated",
-        max_tokens=150,  # Set this to 1 to get only one token
+        max_tokens=150,
     )
 
     if 'true' in response:
