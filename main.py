@@ -24,6 +24,24 @@ def summarize_video(video_url):
     summary = response.choices[0].text.strip()
     return summary
 
+def check_for_ai_written_text(user_input):
+    # Call OpenAI to classify the text
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt="check if this text is ai-generated: " + user_input + ". Return 'True' if it is AI generated, return 'False' if it is not AI generated",
+        max_tokens=150,  # Set this to 1 to get only one token
+    )
+
+    if 'true' in response:
+        text = "The text you provided appears to be AI-generated."
+        return text
+    elif 'false' in response:
+        text = "The text you provided does not appear to be AI-generated."
+        return text
+    else:
+        text = "Unable to determine if the text is AI-generated."
+        return text
+
 # video_url = "https://youtu.be/Q9zv369Ggfk?si=LGG8qHk_sOG1smI3"
 # summary = summarize_video(video_url)
 # print(summary)
@@ -92,7 +110,7 @@ def grade_choice(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=user_id,
         text="What would you like to do?",
-        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA", "Summarize youtube video"]], one_time_keyboard=True)
+        reply_markup=ReplyKeyboardMarkup([["Ask a Question", "Send Me a Book", "Mock SA", "Summarize youtube video", "AI Check"]], one_time_keyboard=True)
     )
 
 def option_choice(update: Update, context: CallbackContext):
@@ -136,10 +154,15 @@ def option_choice(update: Update, context: CallbackContext):
             chat_id=user_id,
             text="Send me a youtube link"
         )
+    elif option == "AI Check":
+        context.bot.send_message(
+            chat_id=user_id,
+            text="Send me text to check"
+        )
     else:
         context.bot.send_message(
             chat_id=user_id,
-            text="Invalid option. Please choose 'Ask a Question' or 'Send Me a Book' or 'Mock SA' or 'Summarize youtube video'."
+            text="Invalid option. Please choose 'Ask a Question' or 'Send Me a Book' or 'Mock SA' or 'Summarize youtube video' or 'AI Check'."
         )
 
 def handle_user_question(update: Update, context: CallbackContext):
@@ -213,6 +236,13 @@ def handle_user_question(update: Update, context: CallbackContext):
         chat_id=user_id,
         text = summary
         )
+    elif user_info[2] == "AI Check":
+        user_input = question
+        check = check_for_ai_written_text(user_input)
+        context.bot.send_message(
+        chat_id=user_id,
+        text = check
+        )
 
 button_handler = MessageHandler(Filters.regex(r'^(compsci|physics|math|igcse|sat|ielts)$'), button)
 grade_handler = MessageHandler(Filters.regex(r'^(7|8|9|10|11|12)$'), grade_choice)
@@ -222,7 +252,7 @@ if __name__ == '__main__':
     dp = updater.dispatcher
 
     start_handler = CommandHandler('start', start)
-    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Send Me a Book|Mock SA|Summarize youtube video)$'), option_choice)
+    option_handler = MessageHandler(Filters.regex(r'^(Ask a Question|Send Me a Book|Mock SA|Summarize youtube video|AI Check)$'), option_choice)
     question_handler = MessageHandler(Filters.text & ~Filters.command, handle_user_question)
 
     dp.add_handler(start_handler)
